@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Gift Tracker</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    background: #1a1a1e;
+    color: #e8e8ed;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .wrap {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0 20px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #8a8aff, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header .badge {
+    font-size: 11px;
+    color: #8a8aff;
+    background: rgba(138, 138, 255, 0.1);
+    padding: 4px 14px;
+    border-radius: 20px;
+    border: 1px solid #4a4a6a;
+  }
+  .filter-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    overflow-x: auto;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-btn {
+    flex: 1;
+    min-width: 70px;
+    padding: 8px 6px;
+    border-radius: 10px;
+    border: 1px solid #3a3a4a;
+    background: #25252e;
+    color: #a0a0b8;
+    font-size: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+  }
+  .filter-btn .label {
+    font-size: 8px;
+    color: #707090;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .filter-btn .value {
+    color: #8a8aff;
+    font-size: 11px;
+    font-weight: 600;
+    max-width: 50px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .filter-btn .arrow {
+    font-size: 7px;
+    color: #707090;
+  }
+  .filter-btn:hover {
+    border-color: #8a8aff;
+    box-shadow: 0 0 20px rgba(138, 138, 255, 0.15);
+  }
+  .filter-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .filter-btn.disabled:hover {
+    border-color: #3a3a4a;
+    box-shadow: none;
+  }
+  .filter-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .filter-actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .btn-apply {
+    background: linear-gradient(135deg, #8a8aff, #6d6dcf);
+    color: #fff;
+    box-shadow: 0 0 30px rgba(138, 138, 255, 0.2);
+  }
+  .btn-apply:hover {
+    transform: scale(0.98);
+    box-shadow: 0 0 50px rgba(138, 138, 255, 0.35);
+  }
+  .btn-clear {
+    background: #25252e;
+    color: #a0a0b8;
+    border: 1px solid #3a3a4a;
+  }
+  .btn-clear:hover {
+    border-color: #8a8aff;
+    box-shadow: 0 0 20px rgba(138, 138, 255, 0.15);
+  }
+  .search-box {
+    width: 100%;
+    padding: 11px 16px;
+    border-radius: 10px;
+    border: 1px solid #3a3a4a;
+    background: #25252e;
+    color: #e8e8ed;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 14px;
+  }
+  .search-box:focus {
+    border-color: #8a8aff;
+    box-shadow: 0 0 30px rgba(138, 138, 255, 0.1);
+  }
+  .search-box::placeholder {
+    color: #707090;
+  }
+  .status {
+    font-size: 13px;
+    color: #707090;
+    margin-bottom: 10px;
+    min-height: 20px;
+  }
+  .status.err { color: #ff6b6b; }
+  .status.ok { color: #8a8aff; }
+  .gift-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .gift-card {
+    background: #1f1f28;
+    border: 1px solid #3a3a4a;
+    border-radius: 12px;
+    padding: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .gift-card:hover {
+    border-color: #8a8aff;
+    transform: translateY(-3px);
+    box-shadow: 0 0 30px rgba(138, 138, 255, 0.12);
+  }
+  .gift-card .image {
+    width: 100%;
+    aspect-ratio: 1/1;
+    background: #25252e;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .gift-card .image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #25252e;
+  }
+  .gift-card .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .gift-card .name {
+    font-size: 13px;
+    font-weight: 600;
+    flex: 1;
+    color: #e8e8ed;
+  }
+  .gift-card .bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+  }
+  .gift-card .price {
+    font-family: monospace;
+    font-size: 15px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #8a8aff, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .gift-card .price.na {
+    color: #707090;
+    -webkit-text-fill-color: #707090;
+  }
+  .empty {
+    text-align: center;
+    color: #707090;
+    padding: 40px 10px;
+    grid-column: 1 / -1;
+  }
+  .load-more {
+    text-align: center;
+    padding: 20px 0 30px;
+  }
+  .load-more button {
+    background: #25252e;
+    border: 1px solid #3a3a4a;
+    color: #a0a0b8;
+    padding: 14px 50px;
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: 600;
+  }
+  .load-more button:hover {
+    border-color: #8a8aff;
+    color: #8a8aff;
+    box-shadow: 0 0 30px rgba(138, 138, 255, 0.15);
+  }
+  .load-more button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .load-more .done {
+    color: #707090;
+    font-size: 14px;
+  }
+  .load-more .loading-more {
+    color: #8a8aff;
+    font-size: 14px;
+  }
+  .load-more .info {
+    color: #707090;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+
+  /* ===== МОДАЛКА ===== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 200;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal-box {
+    background: #1f1f28;
+    border-radius: 20px;
+    max-width: 400px;
+    width: 100%;
+    max-height: 85vh;
+    padding: 20px 16px 24px;
+    border: 1px solid #4a4a6a;
+    box-shadow: 0 0 60px rgba(138, 138, 255, 0.08);
+    overflow-y: auto;
+    animation: fadeIn 0.25s ease;
+  }
+  @keyframes fadeIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .modal-box .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #3a3a4a;
+  }
+  .modal-box .head h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #8a8aff;
+  }
+  .modal-box .head .close {
+    background: none;
+    border: none;
+    color: #707090;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0 8px;
+    transition: 0.3s;
+  }
+  .modal-box .head .close:hover {
+    color: #8a8aff;
+    transform: rotate(90deg);
+  }
+
+  .modal-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .modal-item {
+    background: #25252e;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-item:hover {
+    border-color: #4a4a6a;
+    background: rgba(138, 138, 255, 0.05);
+  }
+  .modal-item.active {
+    border-color: #8a8aff;
+    background: rgba(138, 138, 255, 0.08);
+    box-shadow: 0 0 30px rgba(138, 138, 255, 0.1);
+  }
+  .modal-item .item-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .modal-item .item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e8e8ed;
+  }
+  .modal-item .check-mark {
+    color: #8a8aff;
+    font-size: 18px;
+  }
+
+  .modal-search {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #3a3a4a;
+    background: #25252e;
+    color: #e8e8ed;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 14px;
+  }
+  .modal-search:focus {
+    border-color: #8a8aff;
+  }
+  .modal-search::placeholder {
+    color: #707090;
+  }
+
+  .modal-empty {
+    text-align: center;
+    color: #707090;
+    padding: 30px 10px;
+  }
+
+  @media (max-width: 480px) {
+    .gift-grid { gap: 8px; }
+    .gift-card { padding: 8px; }
+    .gift-card .name { font-size: 12px; }
+    .gift-card .price { font-size: 13px; }
+    .modal-item { padding: 12px 14px; }
+    .modal-item .item-name { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>Gift Tracker</h1>
+    <span class="badge" id="headerStatus">Загрузка...</span>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn" id="btnCollection">
+      <span class="label">Коллекция</span>
+      <span class="value" id="selectedCollection">—</span>
+      <span class="arrow">▼</span>
+    </button>
+    <button class="filter-btn disabled" id="btnModel">
+      <span class="label">Модель</span>
+      <span class="value" id="selectedModel">—</span>
+      <span class="arrow">▼</span>
+    </button>
+    <button class="filter-btn disabled" id="btnBackdrop">
+      <span class="label">Фон</span>
+      <span class="value" id="selectedBackdrop">—</span>
+      <span class="arrow">▼</span>
+    </button>
+  </div>
+
+  <div class="filter-actions">
+    <button class="btn-apply" id="applyFilters">Показать</button>
+    <button class="btn-clear" id="clearFilters">Очистить все</button>
+  </div>
+
+  <input type="text" class="search-box" id="searchGift" placeholder="Быстрый поиск">
+  <div class="status" id="giftStatus"></div>
+  <div class="gift-grid" id="giftGrid"></div>
+  <div class="load-more" id="loadMoreContainer"></div>
+</div>
+
+<!-- ===== МОДАЛКА ===== -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <div class="head">
+      <h2 id="modalTitle">Выберите</h2>
+      <button class="close" id="closeModal">✕</button>
+    </div>
+    <input type="text" class="modal-search" id="modalSearch" placeholder="Поиск...">
+    <div class="modal-grid" id="modalGrid"></div>
+  </div>
+</div>
+
+<script>
+  // ===== НОВЫЙ АКТУАЛЬНЫЙ ТОКЕН =====
+  const TOKEN = "2faeb730de0b99d6f8f99804416fec9fdb7cea6da9c4b4c4f241814415e771f8";
+  const API = "https://gift-satellite.dev/api";
+
+  const $ = id => document.getElementById(id);
+
+  let allGifts = [];
+  let offset = 0;
+  let hasMore = true;
+  let loading = false;
+  let initialLoadDone = false;
+  const INITIAL_LIMIT = 30;
+  const LOAD_MORE_COUNT = 20;
+
+  let selCollection = '';
+  let selModel = '';
+  let selBackdrop = '';
+
+  let collectionsList = [];
+  let modelsList = [];
+  let backdropsList = [];
+
+  let modalType = 'collection';
+  let modalItems = [];
+
+  function headers() {
+    return { 'Authorization': 'Token ' + TOKEN };
+  }
+
+  function setStatus(msg, err) {
+    const el = $('giftStatus');
+    el.textContent = msg || '';
+    el.className = 'status' + (err ? ' err' : ' ok');
+  }
+
+  function setHeaderStatus(msg) {
+    $('headerStatus').textContent = msg || '';
+  }
+
+  async function apiGet(path) {
+    const res = await fetch(API + path, { headers: headers() });
+    if (!res.ok) {
+      let msg = 'HTTP ' + res.status;
+      try { const j = await res.json(); if (j.message) msg = j.message; } catch (e) {}
+      throw new Error(msg);
+    }
+    return res.json();
+  }
+
+  // ===== ЗАГРУЗКА КОЛЛЕКЦИЙ =====
+  async function loadCollections() {
+    try {
+      const data = await apiGet('/gift/collections');
+      collectionsList = data.map(c => c.name).sort();
+      setStatus('Коллекции загружены');
+      setHeaderStatus(collectionsList.length + ' коллекций');
+    } catch (e) {
+      setStatus('Ошибка: ' + e.message, true);
+      setHeaderStatus('Ошибка');
+    }
+  }
+
+  // ===== ЗАГРУЗКА ДЕТАЛЕЙ КОЛЛЕКЦИИ =====
+  async function loadCollectionDetails(collectionName) {
+    try {
+      const data = await apiGet(`/gift/collection/${encodeURIComponent(collectionName)}`);
+      modelsList = (data.models || []).map(m => m.name).sort();
+      backdropsList = (data.backdrops || []).map(b => b.name).sort();
+      document.getElementById('btnModel').classList.remove('disabled');
+      document.getElementById('btnBackdrop').classList.remove('disabled');
+      return true;
+    } catch (e) {
+      console.error('Ошибка загрузки коллекции:', e);
+      modelsList = [];
+      backdropsList = [];
+      return false;
+    }
+  }
+
+  // ===== ЗАГРУЗКА ПОДАРКОВ =====
+  async function loadGifts(reset = true) {
+    if (loading) return;
+    if (!hasMore && !reset) {
+      console.log('Все подарки уже загружены');
+      return;
+    }
+
+    loading = true;
+
+    if (reset) {
+      offset = 0;
+      hasMore = true;
+      allGifts = [];
+      $('giftGrid').innerHTML = '';
+      $('loadMoreContainer').innerHTML = '';
+      setStatus('Загрузка...');
+      initialLoadDone = false;
+    } else {
+      const container = $('loadMoreContainer');
+      container.innerHTML = `<span class="loading-more">⏳ Загрузка...</span>`;
+    }
+
+    try {
+      const params = new URLSearchParams();
+      params.append('offset', offset);
+      params.append('limit', reset ? INITIAL_LIMIT : LOAD_MORE_COUNT);
+      if (selModel) params.append('models', selModel);
+      if (selBackdrop) params.append('backdrops', selBackdrop);
+
+      const coll = selCollection || 'all-collections';
+      const url = `/search/mrkt/${encodeURIComponent(coll)}?${params.toString()}`;
+
+      console.log(`📦 Запрос: offset=${offset}, limit=${reset ? INITIAL_LIMIT : LOAD_MORE_COUNT}`);
+      const data = await apiGet(url);
+
+      console.log(`✅ Получено: ${data ? data.length : 0} подарков`);
+
+      if (!data || data.length === 0) {
+        hasMore = false;
+        if (reset) {
+          $('giftGrid').innerHTML = '<div class="empty">Подарки не найдены</div>';
+          $('loadMoreContainer').innerHTML = '';
+        } else {
+          $('loadMoreContainer').innerHTML = `<div class="done">✨ Все подарки загружены (${allGifts.length} шт.)</div>`;
+        }
+        setStatus('Подарков не найдено', true);
+        loading = false;
+        return;
+      }
+
+      if (reset) {
+        allGifts = data;
+      } else {
+        allGifts = allGifts.concat(data);
+      }
+
+      offset += data.length;
+      
+      const requested = reset ? INITIAL_LIMIT : LOAD_MORE_COUNT;
+      if (data.length < requested) {
+        hasMore = false;
+        console.log('🏁 Это последняя порция подарков');
+      } else {
+        hasMore = true;
+      }
+
+      renderGifts();
+
+      if (hasMore) {
+        $('loadMoreContainer').innerHTML = `
+          <button id="loadMoreBtn">📥 Загрузить ещё ${LOAD_MORE_COUNT}</button>
+          <div class="info">Загружено ${allGifts.length} подарков</div>
+        `;
+        document.getElementById('loadMoreBtn')?.addEventListener('click', function() {
+          loadGifts(false);
+        });
+      } else {
+        if (allGifts.length > 0) {
+          $('loadMoreContainer').innerHTML = `<div class="done">✨ Все подарки загружены (${allGifts.length} шт.)</div>`;
+        } else {
+          $('loadMoreContainer').innerHTML = '';
+        }
+      }
+
+      setStatus('');
+      setHeaderStatus(`${allGifts.length} подарков`);
+      loading = false;
+      initialLoadDone = true;
+
+    } catch (e) {
+      console.error('❌ Ошибка загрузки:', e);
+      setStatus('Ошибка: ' + e.message, true);
+      loading = false;
+      if (!reset) {
+        $('loadMoreContainer').innerHTML = `<div class="done">❌ Ошибка загрузки. Попробуйте снова</div>`;
+      }
+    }
+  }
+
+  function updateDisplay() {
+    $('selectedCollection').textContent = selCollection || '—';
+    $('selectedModel').textContent = selModel || '—';
+    $('selectedBackdrop').textContent = selBackdrop || '—';
+  }
+
+  // ===== МОДАЛКА =====
+  function openModal(type) {
+    if (type !== 'collection' && !selCollection) {
+      setStatus('Сначала выберите коллекцию', true);
+      return;
+    }
+
+    modalType = type;
+    const titles = {
+      collection: 'Коллекция',
+      model: 'Модель',
+      backdrop: 'Фон'
+    };
+    $('modalTitle').textContent = titles[type] || 'Выберите';
+
+    let items = [];
+    if (type === 'collection') {
+      items = collectionsList.map(name => ({ name }));
+    } else if (type === 'model') {
+      items = modelsList.map(name => ({ name }));
+    } else if (type === 'backdrop') {
+      items = backdropsList.map(name => ({ name }));
+    }
+
+    modalItems = items;
+    renderModalItems(items);
+    $('modalSearch').value = '';
+    $('modalOverlay').classList.add('active');
+  }
+
+  function getVal(type) {
+    if (type === 'collection') return selCollection;
+    if (type === 'model') return selModel;
+    if (type === 'backdrop') return selBackdrop;
+    return '';
+  }
+
+  function setVal(type, val) {
+    if (type === 'collection') {
+      selCollection = val;
+      updateDisplay();
+      if (val) {
+        loadCollectionDetails(val);
+      } else {
+        modelsList = [];
+        backdropsList = [];
+        document.getElementById('btnModel').classList.add('disabled');
+        document.getElementById('btnBackdrop').classList.add('disabled');
+        selModel = '';
+        selBackdrop = '';
+        updateDisplay();
+      }
+    } else if (type === 'model') {
+      selModel = val;
+      updateDisplay();
+    } else if (type === 'backdrop') {
+      selBackdrop = val;
+      updateDisplay();
+    }
+    closeModal();
+    loadGifts(true);
+  }
+
+  function renderModalItems(items) {
+    const grid = $('modalGrid');
+    const search = $('modalSearch').value.toLowerCase().trim();
+    const curr = getVal(modalType);
+
+    let filtered = items;
+    if (search) {
+      filtered = items.filter(item => item.name.toLowerCase().includes(search));
+    }
+
+    if (!filtered.length) {
+      grid.innerHTML = `<div class="modal-empty">Ничего не найдено</div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(item => {
+      const isActive = item.name === curr;
+      
+      return `
+        <div class="modal-item ${isActive ? 'active' : ''}" data-value="${item.name}">
+          <div class="item-left">
+            <div class="item-name">${item.name}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            ${isActive ? '<span class="check-mark">✦</span>' : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    grid.querySelectorAll('.modal-item').forEach(el => {
+      el.addEventListener('click', function() {
+        const value = this.dataset.value;
+        const current = getVal(modalType);
+        if (current === value) {
+          setVal(modalType, '');
+        } else {
+          setVal(modalType, value);
+        }
+      });
+    });
+  }
+
+  function closeModal() {
+    $('modalOverlay').classList.remove('active');
+  }
+
+  // ===== КАРТИНКИ ИЗ API =====
+  function getImageUrl(g) {
+    if (g.collectionName && g.slug) {
+      return `https://gift-satellite.dev/api/gift/image/${encodeURIComponent(g.collectionName)}/${encodeURIComponent(g.slug)}`;
+    }
+    return null;
+  }
+
+  // ===== ОТОБРАЖЕНИЕ ПОДАРКОВ =====
+  function renderGifts() {
+    const query = $('searchGift').value.toLowerCase().trim();
+    let filtered = allGifts.slice();
+
+    if (query) {
+      filtered = filtered.filter(g =>
+        (g.modelName || '').toLowerCase().includes(query) ||
+        (g.slug || '').toLowerCase().includes(query) ||
+        (g.collectionName || '').toLowerCase().includes(query) ||
+        (g.backdropName || '').toLowerCase().includes(query)
+      );
+    }
+
+    filtered.sort((a, b) => (a.normalizedPrice || 0) - (b.normalizedPrice || 0));
+
+    const grid = $('giftGrid');
+    if (!filtered.length) {
+      grid.innerHTML = '<div class="empty">Подарки не найдены</div>';
+      return;
+    }
+
+    grid.innerHTML = filtered.map((g) => {
+      const name = g.collectionName || 'Коллекция';
+      const slug = g.slug || '';
+      let num = g.number || '';
+      if (!num && slug) { const m = slug.match(/-(\d+)$/); if (m) num = m[1]; }
+      const display = num ? `${name} #${num}` : name;
+      const price = g.normalizedPrice ? g.normalizedPrice.toFixed(2) + ' TON' : '—';
+      
+      const imgUrl = getImageUrl(g);
+      
+      let imgHtml;
+      if (imgUrl) {
+        imgHtml = `<img src="${imgUrl}" alt="${display}" loading="lazy">`;
+      } else {
+        imgHtml = '';
+      }
+
+      return `
+        <div class="gift-card">
+          <div class="image">${imgHtml}</div>
+          <div class="top">
+            <span class="name">${display}</span>
+          </div>
+          <div class="bottom">
+            <span class="price ${g.normalizedPrice ? '' : 'na'}">${price}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ===== СОБЫТИЯ =====
+  $('btnCollection').addEventListener('click', () => openModal('collection'));
+  $('btnModel').addEventListener('click', () => {
+    if (selCollection) openModal('model');
+    else setStatus('Сначала выберите коллекцию', true);
+  });
+  $('btnBackdrop').addEventListener('click', () => {
+    if (selCollection) openModal('backdrop');
+    else setStatus('Сначала выберите коллекцию', true);
+  });
+
+  $('closeModal').addEventListener('click', closeModal);
+  $('modalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+  $('modalSearch').addEventListener('input', function() {
+    renderModalItems(modalItems);
+  });
+
+  $('applyFilters').addEventListener('click', function() {
+    loadGifts(true);
+  });
+
+  $('clearFilters').addEventListener('click', function() {
+    selCollection = '';
+    selModel = '';
+    selBackdrop = '';
+    modelsList = [];
+    backdropsList = [];
+    document.getElementById('btnModel').classList.add('disabled');
+    document.getElementById('btnBackdrop').classList.add('disabled');
+    updateDisplay();
+    loadGifts(true);
+  });
+
+  $('searchGift').addEventListener('input', renderGifts);
+
+  // ===== ЗАПУСК =====
+  loadCollections();
+  setTimeout(() => loadGifts(true), 500);
+</script>
+</body>
+</html>
